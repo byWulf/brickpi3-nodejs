@@ -1,0 +1,30 @@
+{
+  "name": "brickpi3",
+  "version": "0.9.0",
+  "description": "Control your BrickPi3 with nodejs",
+  "main": "index.js",
+  "dependencies": {
+    "pi-spi": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bywulf/brickpi3-nodejs.git"
+  },
+  "keywords": [
+    "brickpi",
+    "brickpi3",
+    "lego",
+    "raspberryPi",
+    "robot"
+  ],
+  "author": "Michael Wolf <wulf1337@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bywulf/brickpi3-nodejs/issues"
+  },
+  "homepage": "https://github.com/bywulf/brickpi-nodejs3#readme"
+}
