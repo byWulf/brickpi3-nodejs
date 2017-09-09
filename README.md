@@ -1,4 +1,4 @@
-# BrickPi3 packae for nodejs
+# BrickPi3 package for nodejs
 With this package you can control your BrickPi3 with nodejs. 
 
 This package has the same interface as the python library and was copied 1:1 with sligth language adjustments (bitwise operators are a bit different ans the return values are promises). So just look at their examples (https://github.com/DexterInd/BrickPi3/tree/master/Software/Python/Examples) to see, how you can archive different tasks. Just remember, that you get promises back from most of the methods.
