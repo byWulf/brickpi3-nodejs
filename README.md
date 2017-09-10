@@ -6,8 +6,8 @@ This package has the same interface as the python library and was copied 1:1 wit
 If you find any bugs, please open an issue or submit a pull request. I couldn't test everything, because I only have ev3 large motors. So I need your help to know if everything else works :)
 
 ## Install
-```
-    npm install --save brickpi3
+```bash
+npm install --save brickpi3
 ```
 
 ## Usage
