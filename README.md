@@ -14,6 +14,9 @@ If you find any bugs, please open an issue or submit a pull request. I couldn't 
     const brickpi3 = require('brickpi3');
     
     BP = new brickpi3.BrickPi3();
+
+    //Make sure to stop and free all motors and sensors when the programm exits
+    brickpi3.utils.resetAllWhenFinished(BP);
     
     //Resetting offset position of motor A to 0
     BP.get_motor_encoder(BP.PORT_A).then((encoder) => {
@@ -22,6 +25,18 @@ If you find any bugs, please open an issue or submit a pull request. I couldn't 
         return BP.set_motor_power(BP.PORT_A, 10);
     }).catch((err) => {
         console.log(err);
+    });
+    
+### Utils
+When you need to find the extreme offsets of the motor (f.e. an arm can only get from point a to point b but not beyond), there is a helper function available like explained in this video: https://youtu.be/d0bghBZZMUg?t=1m35s
+
+    const brickpi3 = require('brickpi3');
+    
+    BP = new brickpi3.BrickPi3();
+    brickpi3.utils.resetAllWhenFinished(BP);
+    
+    brickpi3.utils.resetMotorEncoder(BP, BP.PORT_A, brickpi3.utils.RESET_MOTOR_LIMIT.MIDPOINT_LIMIT).then(() => {
+        console.log("Motor should now be in the middle of its two extremes");
     });
     
 ### BrickPi3 Stacking
@@ -46,6 +61,9 @@ Then you can set the address for each of your brickPi's in the initializing part
     }).then(() => {
         BP1 = new brickpi3.BrickPi3(1);
         BP2 = new brickpi3.BrickPi3(2);
+        
+        brickpi3.utils.resetAllWhenFinished(BP1);
+        brickpi3.utils.resetAllWhenFinished(BP2);
         
     //Reset Motor A offset of your first brickPi
     }).then(() => {

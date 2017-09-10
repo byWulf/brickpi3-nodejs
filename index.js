@@ -280,14 +280,12 @@ function BrickPi3(address = 1) {
      */
     this.spi_transfer_array = (data_out) => {
         return new Promise((resolve, reject) => {
-            console.log("=> ", data_out);
             spi.transfer(Buffer.from(data_out), (e, responseBuffer) => {
                 if (e) {
                     reject(e);
                 }
 
                 let responseArray = [...responseBuffer];
-                console.log("<= ", responseArray);
                 resolve(responseArray);
             });
         });
@@ -1202,5 +1200,6 @@ function BrickPi3(address = 1) {
 
 module.exports = {
     set_address: set_address,
-    BrickPi3: BrickPi3
+    BrickPi3: BrickPi3,
+    utils: require('./utils')
 };
