@@ -1011,7 +1011,7 @@ function BrickPi3(address = 1) {
      * @param {number} kp The KP constant (default 25)
      * @return {Promise}
      */
-    this.set_motor_position_kp = (port, kp = 70) => {
+    this.set_motor_position_kp = (port, kp = 25) => {
         return new Promise((resolve, reject) => {
             this.spi_transfer_array([this.SPI_Address, this.BPSPI_MESSAGE_TYPE.SET_MOTOR_POSITION_KP, parseInt(port), parseInt(kp)]).then(() => {
                 resolve();
