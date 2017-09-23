@@ -1,6 +1,6 @@
 {
   "name": "brickpi3",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Control your BrickPi3 with nodejs",
   "main": "index.js",
   "dependencies": {
