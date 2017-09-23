@@ -145,8 +145,35 @@ const resetAllWhenFinished = (brickPiInstance) => {
     resetBrickPis.push(brickPiInstance);
 };
 
+const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
+    return new Promise((resolve, reject) => {
+        let lastEncoder = null;
+        const checkPosition = (callback) => {
+            sleep(20);
+
+            brickPiInstance.get_motor_encoder(motorPort).then((encoder) => {
+                if (lastEncoder !== null && lastEncoder === encoder) {
+                    callback();
+                    return;
+                }
+                lastEncoder = encoder;
+
+                checkPosition(callback);
+            });
+        };
+
+        brickPiInstance.set_motor_position(motorPort, targetPosition).then(() => {
+            console.log("sent command for position " + targetPosition, motorPort);
+            checkPosition(() => {
+                resolve();
+            });
+        });
+    });
+};
+
 module.exports = {
     RESET_MOTOR_LIMIT: RESET_MOTOR_LIMIT,
     resetMotorEncoder: resetMotorEncoder,
-    resetAllWhenFinished: resetAllWhenFinished
+    resetAllWhenFinished: resetAllWhenFinished,
+    setMotorPosition: setMotorPosition
 };
