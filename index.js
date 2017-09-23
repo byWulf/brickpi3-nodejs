@@ -771,7 +771,7 @@ function BrickPi3(address = 1) {
                 this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
-                            return [(((reply[8] & 0x0F) << 8) | reply[9]), (((reply[8] >> 4) & 0x0F) | (reply[7] << 4)), (reply[6] & 0x01), ((reply[6] >> 1) & 0x01)];
+                            resolve([(((reply[8] & 0x0F) << 8) | reply[9]), (((reply[8] >> 4) & 0x0F) | (reply[7] << 4)), (reply[6] & 0x01), ((reply[6] >> 1) & 0x01)]);
                         } else {
                             throw new SensorError('get_sensor error: Invalid sensor data');
                         }
@@ -817,7 +817,7 @@ function BrickPi3(address = 1) {
                 this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if ((reply[4] === this.SensorType[port_index] || (this.SensorType[port_index] === this.SENSOR_TYPE.TOUCH && (reply[4] === this.SENSOR_TYPE.NXT_TOUCH || reply[4] === this.SENSOR_TYPE.EV3_TOUCH))) && reply[5] === this.SENSOR_STATE.VALID_DATA) {
-                            return reply[6];
+                            resolve(reply[6]);
                         } else {
                             throw new SensorError('get_sensor error: Invalid sensor data');
                         }
@@ -831,7 +831,7 @@ function BrickPi3(address = 1) {
                 this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
-                            return [reply[6], ((reply[7] << 2) | ((reply[11] >> 6) & 0x03)), ((reply[8] << 2) | ((reply[11] >> 4) & 0x03)), ((reply[9] << 2) | ((reply[11] >> 2) & 0x03)), ((reply[10] << 2) | (reply[11] & 0x03))];
+                            resolve([reply[6], ((reply[7] << 2) | ((reply[11] >> 6) & 0x03)), ((reply[8] << 2) | ((reply[11] >> 4) & 0x03)), ((reply[9] << 2) | ((reply[11] >> 2) & 0x03)), ((reply[10] << 2) | (reply[11] & 0x03))]);
                         } else {
                             throw new SensorError('get_sensor error: Invalid sensor data');
                         }
