@@ -171,9 +171,43 @@ const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
     });
 };
 
+/**
+ * Waits for a simple sensor to become a given value. Works with all sensors, which return a scalar value (and not an
+ * array). If the sensor returns the value, the promise is resolved.
+ *
+ * @param {Object} brickPiInstance
+ * @param {*} sensorPort
+ * @param {number} targetValue
+ * @param {number} timeLimit
+ * @return {Promise}
+ */
+const waitForSensor = (brickPiInstance, sensorPort, targetValue, timeLimit = 10000) => {
+    return new Promise((resolve, reject) => {
+        let startTime = Date.now();
+        const checkValue = () => {
+            sleep(10);
+            if (Date.now() - startTime > timeLimit) {
+                reject(new Error('waitForSensor: timeLimit exceeded'));
+                return;
+            }
+
+            brickPiInstance.get_sensor(sensorPort).then((value) => {
+                if (value === targetValue) {
+                    resolve();
+                } else {
+                    checkValue();
+                }
+            });
+        };
+
+        checkValue();
+    });
+};
+
 module.exports = {
     RESET_MOTOR_LIMIT: RESET_MOTOR_LIMIT,
     resetMotorEncoder: resetMotorEncoder,
     resetAllWhenFinished: resetAllWhenFinished,
-    setMotorPosition: setMotorPosition
+    setMotorPosition: setMotorPosition,
+    waitForSensor: waitForSensor
 };
