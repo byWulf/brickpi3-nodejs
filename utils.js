@@ -23,9 +23,10 @@ const RESET_MOTOR_LIMIT = {
  * @param {number} newOffset Set the found point to this offset value.
  * @param {number} maxPower When the power of the motor drops below this value, it is considered to be an obstacle. (WARNING: power is currently "dps", because I couldn't find a way to get the current power of the motor.. get_motor_status states that it returnes the power, but instead returnes the speed :/)
  * @param {number} timeLimit If no obstacle is found within this time limit, the promise gets rejected.
+ * @param {number} motorPower Power of the motor (lower for smoother finding)
  * @return {Promise} When the new offset is set, the promise resolves.
  */
-const resetMotorEncoder = (brickPiInstance, motorPort, limitType = RESET_MOTOR_LIMIT.CURRENT_POSITION, newOffset = 0, maxPower = 25, timeLimit = 10000) => {
+const resetMotorEncoder = (brickPiInstance, motorPort, limitType = RESET_MOTOR_LIMIT.CURRENT_POSITION, newOffset = 0, maxPower = 25, timeLimit = 10000, motorPower = 100) => {
     return new Promise((resolve, reject) => {
 
         let startTime = Date.now();
@@ -62,8 +63,8 @@ const resetMotorEncoder = (brickPiInstance, motorPort, limitType = RESET_MOTOR_L
                 reject(err);
             });
         } else if (limitType === RESET_MOTOR_LIMIT.FORWARD_LIMIT || limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) {
-            let power = 100;
-            if (limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) power = -100;
+            let power = motorPower;
+            if (limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) power = -motorPower;
 
             brickPiInstance.set_motor_power(motorPort, power).then(() => {
                 checkPower((err, offset) => {
@@ -82,14 +83,14 @@ const resetMotorEncoder = (brickPiInstance, motorPort, limitType = RESET_MOTOR_L
                 reject(err);
             });
         } else if (limitType === RESET_MOTOR_LIMIT.MIDPOINT_LIMIT) {
-            brickPiInstance.set_motor_power(motorPort, 100).then(() => {
+            brickPiInstance.set_motor_power(motorPort, motorPower).then(() => {
                 checkPower((err, offsetForward) => {
                     if (err) {
                         reject(err);
                         return;
                     }
 
-                    brickPiInstance.set_motor_power(motorPort, -100).then(() => {
+                    brickPiInstance.set_motor_power(motorPort, -motorPower).then(() => {
                         checkPower((err, offsetBackward) => {
                             if (err) {
                                 reject(err);
