@@ -122,18 +122,14 @@ const resetAllWhenFinished = (brickPiInstance) => {
     if (!shutdownHandlerRegistered) {
         shutdownHandlerRegistered = true;
 
-        function exitHandler(err) {
+        async function exitHandler(err) {
             if (err) console.log(err.stack);
 
-            if (resetBrickPis.length > 0) {
-                let brickPi = resetBrickPis.pop();
-
-                brickPi.reset_all().then(() => {
-                    exitHandler();
-                });
-            } else {
-                process.exit();
+            for (let i = 0; i < resetBrickPis.length; i++) {
+                await resetBrickPis[i].reset_all();
             }
+
+            process.exit();
         }
 
         process.stdin.resume();
@@ -163,7 +159,6 @@ const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
         };
 
         brickPiInstance.set_motor_position(motorPort, targetPosition).then(() => {
-            console.log("sent command for position " + targetPosition, motorPort);
             checkPosition(() => {
                 resolve();
             });
