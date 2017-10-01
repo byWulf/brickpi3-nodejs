@@ -15,19 +15,21 @@ npm install --save brickpi3
 ```javascript
 const brickpi3 = require('brickpi3');
 
-let BP = new brickpi3.BrickPi3();
-
-//Make sure to stop and free all motors and sensors when the programm exits
-brickpi3.utils.resetAllWhenFinished(BP);
-
-//Resetting offset position of motor A to 0
-BP.get_motor_encoder(BP.PORT_A).then((encoder) => {
-    return BP.offset_motor_encoder(BP.PORT_A, encoder);
-}).then(() => {
-    return BP.set_motor_power(BP.PORT_A, 10);
-}).catch((err) => {
-    console.log(err);
-});
+(async () => {
+    try {
+        let BP = new brickpi3.BrickPi3();
+        
+        //Make sure to stop and free all motors and sensors when the programm exits
+        brickpi3.utils.resetAllWhenFinished(BP);
+        
+        //Resetting offset position of motor A to 0
+        let encoder = await BP.get_motor_encoder(BP.PORT_A);
+        await BP.offset_motor_encoder(BP.PORT_A, encoder);
+        await BP.set_motor_power(BP.PORT_A, 10);
+    } catch (err) {
+        console.log(err);        
+    }
+})();
 ```
     
 ### Utils
@@ -36,12 +38,47 @@ When you need to find the extreme offsets of the motor (f.e. an arm can only get
 ```javascript
 const brickpi3 = require('brickpi3');
 
-let BP = new brickpi3.BrickPi3();
-brickpi3.utils.resetAllWhenFinished(BP);
+(async () => {
+    try {
+        let BP = new brickpi3.BrickPi3();
+        brickpi3.utils.resetAllWhenFinished(BP);
+        
+        await brickpi3.utils.resetMotorEncoder(BP, BP.PORT_A, brickpi3.utils.RESET_MOTOR_LIMIT.MIDPOINT_LIMIT);
+        await BP.set_motor_position(BP.PORT_A, 0);
+        console.log("Motor should now be in the middle of its two extremes");
+    } catch (err) {
+        console.log(err);
+    }
+})();
+```
 
-brickpi3.utils.resetMotorEncoder(BP, BP.PORT_A, brickpi3.utils.RESET_MOTOR_LIMIT.MIDPOINT_LIMIT).then(() => {
-    console.log("Motor should now be in the middle of its two extremes");
-}); 
+For easier working with motors and sensors, you can get an instance of each of them and then access their methods:
+```javascript
+const brickpi3 = require('brickpi3');
+
+(async () => {
+    try {
+        let BP = new brickpi3.BrickPi3();
+        brickpi3.utils.resetAllWhenFinished(BP);
+        
+        //Get the instance of one motor and sensor
+        let motor = brickpi3.utils.getMotor(BP, BP.PORT_A);
+        let sensor = brickpi3.utils.getSensor(BP, BP.PORT_2);
+        
+        //Reset the motors encoder to 0
+        await motor.resetEncoder();
+        
+        //Rotates the motor one revolution - will resolve only when finished
+        await motor.setPosition(360);
+        
+        //Powers on the motor until the callback function is true (good to use with sensors f.e.)
+        await motor.setPower(50, async () => {
+            return await sensor.getValue() === 1;
+        });
+    } catch (err) {
+        console.log(err);
+    }
+})();
 ```
     
 ### BrickPi3 Stacking
@@ -52,10 +89,14 @@ First attach each brickPi separatly and execute the following script. You need t
 ```javascript
 const brickpi3 = require('brickpi3');
 
-let BP = new brickpi3.BrickPi3();
-BP.get_id().then((id) => {
-    console.log(id);
-});
+(async () => {
+    try {
+        let BP = new brickpi3.BrickPi3();
+        console.log(await BP.get_id());
+    } catch (err) {
+        console.log(err);
+    }
+})();
 ```
     
 Then you can set the address for each of your brickPi's in the initializing part and access the four sensors and motors with each brickPi object instance.
@@ -63,46 +104,43 @@ Then you can set the address for each of your brickPi's in the initializing part
 ```javascript
 const brickpi3 = require('brickpi3');
 
-let BP1, BP2;
-brickpi3.set_address(1, 'A778704A514D355934202020FF110722').then(() => {
-    return brickpi3.set_address(2, 'DF9E6AC3514D355934202020FF112718');
-}).then(() => {
-    BP1 = new brickpi3.BrickPi3(1);
-    BP2 = new brickpi3.BrickPi3(2);
+(async () => {
+    try {
+        await brickpi3.set_address(1, 'A778704A514D355934202020FF110722');
+        await brickpi3.set_address(2, 'DF9E6AC3514D355934202020FF112718');
+        
+        const BP1 = new brickpi3.BrickPi3(1);
+        const BP2 = new brickpi3.BrickPi3(2);
+            
+        brickpi3.utils.resetAllWhenFinished(BP1);
+        brickpi3.utils.resetAllWhenFinished(BP2);
+        
+        const motor1 = brickpi3.utils.getMotor(BP1, BP1.PORT_A);
+        const motor2 = brickpi3.utils.getMotor(BP2, BP2.PORT_A);
+            
+        //Reset Motor A offset of your first brickPi
+        await motor1.resetEncoder();
+            
+        //Reset Motor A offset of your second brickPi
+        await motor2.resetEncoder();
+            
+        //Let the motor A of your first brickPi turn constantly
+        await motor1.setPower(10);
+            
+        //Let the motor A of your second brickPi rotate by 45° every two seconds.
+        let target = 0;
+        const moveOn = async () => {
+            target = target + 45;
+            await motor2.setPosition(target);
     
-    brickpi3.utils.resetAllWhenFinished(BP1);
-    brickpi3.utils.resetAllWhenFinished(BP2);
-    
-//Reset Motor A offset of your first brickPi
-}).then(() => {
-    return BP1.get_motor_encoder(BP1.PORT_A);
-}).then((encoder) => {
-    return BP1.offset_motor_encoder(BP1.PORT_A, encoder);
-    
-//Reset Motor A offset of your second brickPi
-}).then(() => {
-    return BP2.get_motor_encoder(BP2.PORT_A);
-}).then((encoder) => {
-    return BP2.offset_motor_encoder(BP2.PORT_A, encoder);
-    
-//Let the motor A of your first brickPi turn constantly
-}).then(() => {
-    return BP1.set_motor_power(BP1.PORT_A, 10);
-    
-//Let the motor A of your second brickPi rotate by 45° every two seconds.
-}).then(() => {
-    target = 0;
-    const moveOn = () => {
-        target = target + 45;
-        BP2.set_motor_position(BP2.PORT_A, target);
-
-        setTimeout(moveOn, 2000);
-    };
-    moveOn();
-    
-}).catch((err) => {
-    console.log(err);
-});
+            setTimeout(moveOn, 2000);
+        };
+        moveOn();
+            
+    } catch(err) {
+        console.log(err);
+    }
+})();
 ```
 
 ## Special thanks

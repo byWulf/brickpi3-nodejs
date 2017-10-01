@@ -1,4 +1,6 @@
 const sleep = require('system-sleep');
+const Motor = require('./objects/motor');
+const Sensor = require('./objects/sensor');
 
 const RESET_MOTOR_LIMIT = {
     CURRENT_POSITION: 1,
@@ -141,6 +143,15 @@ const resetAllWhenFinished = (brickPiInstance) => {
     resetBrickPis.push(brickPiInstance);
 };
 
+/**
+ * Sets the motors position and resolves, when the final position is reached
+ * @deprecated Will be removed in 1.0.0. Use brickpi3.utils.getMotor(BP, port).setPosition(targetPosition);
+ *
+ * @param brickPiInstance
+ * @param motorPort
+ * @param targetPosition
+ * @return {Promise}
+ */
 const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
     return new Promise((resolve, reject) => {
         let lastEncoder = null;
@@ -169,6 +180,7 @@ const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
 /**
  * Waits for a simple sensor to become a given value. Works with all sensors, which return a scalar value (and not an
  * array). If the sensor returns the value, the promise is resolved.
+ * @deprecated Will be removed in 1.0.0. Use brickpi3.utils.getSensor(BP, BP.PORT_1).waitFor(1);
  *
  * @param {Object} brickPiInstance
  * @param {*} sensorPort
@@ -199,10 +211,20 @@ const waitForSensor = (brickPiInstance, sensorPort, targetValue, timeLimit = 100
     });
 };
 
+const getMotor = (brickPiInstance, motorPort) => {
+    return new Motor(brickPiInstance, motorPort);
+};
+
+const getSensor = (brickPiInstance, sensorPort) => {
+    return new Sensor(brickPiInstance, sensorPort);
+};
+
 module.exports = {
     RESET_MOTOR_LIMIT: RESET_MOTOR_LIMIT,
     resetMotorEncoder: resetMotorEncoder,
     resetAllWhenFinished: resetAllWhenFinished,
     setMotorPosition: setMotorPosition,
-    waitForSensor: waitForSensor
+    waitForSensor: waitForSensor,
+    getMotor: getMotor,
+    getSensor: getSensor
 };
