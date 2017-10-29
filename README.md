@@ -80,7 +80,17 @@ const brickpi3 = require('brickpi3');
     }
 })();
 ```
-    
+
+If you want to calculate, what gear ratio some connected gears have, there is also a helper:
+```javascript
+const brickpi3 = require('brickpi3');
+
+//A 8-teeth-gear drives a 24-teeth-gear, which is connected to another 8-teeth-gear, which drives another 24-teeth-gear
+console.log(new brickpi3.utils.Gear(8).drive(24).connect(8).drive(24).getFactor());
+// => 0.111 (so if you rotate the initial 8-teeth-gear one evolution, the last 24-teeth-gear will rotate 0.111 rounds in the same direction)
+```
+![](https://raw.githubusercontent.com/bywulf/brickpi3-nodejs/master/docs/gearExplanation.gif)
+
 ### BrickPi3 Stacking
 If you have multiple brickPi3's, you can stack them and control even more motors/sensors with a single raspberry pi.
 

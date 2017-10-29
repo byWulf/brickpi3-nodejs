@@ -219,6 +219,67 @@ const getSensor = (brickPiInstance, sensorPort) => {
     return new Sensor(brickPiInstance, sensorPort);
 };
 
+const Gear = function(teeth) {
+    this._joinedParent = null;
+    this._drivenParent = null;
+
+    /**
+     *
+     * @param {number|Gear} teethOrGear
+     * @return {Gear}
+     */
+    this.drive = (teethOrGear) => {
+        if(!(teethOrGear instanceof Gear)) {
+            teethOrGear = new Gear(teethOrGear);
+        }
+
+        teethOrGear._drivenParent = this;
+
+        return teethOrGear;
+    };
+
+    /**
+     *
+     * @param {number|Gear} teethOrGear
+     * @return {Gear}
+     */
+    this.connect = (teethOrGear) => {
+        if(!(teethOrGear instanceof Gear)) {
+            teethOrGear = new Gear(teethOrGear);
+        }
+
+        teethOrGear._joinedParent = this;
+
+        return teethOrGear;
+    };
+
+    /**
+     * @return {number}
+     */
+    this.getTeeth = () => {
+        return teeth;
+    };
+
+    /**
+     * @return {number}
+     */
+    this.getFactor = () => {
+        let currentGear = this;
+        let currentFactor = 1;
+
+        while (currentGear._joinedParent !== null || currentGear._drivenParent !== null) {
+            if (currentGear._drivenParent !== null) {
+                currentFactor *= -1 * currentGear._drivenParent.getTeeth() / currentGear.getTeeth();
+                currentGear = currentGear._drivenParent;
+            } else {
+                currentGear = currentGear._joinedParent;
+            }
+        }
+
+        return currentFactor;
+    }
+};
+
 module.exports = {
     RESET_MOTOR_LIMIT: RESET_MOTOR_LIMIT,
     resetMotorEncoder: resetMotorEncoder,
@@ -226,5 +287,6 @@ module.exports = {
     setMotorPosition: setMotorPosition,
     waitForSensor: waitForSensor,
     getMotor: getMotor,
-    getSensor: getSensor
+    getSensor: getSensor,
+    Gear: Gear
 };

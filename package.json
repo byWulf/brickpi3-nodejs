@@ -7,9 +7,11 @@
     "pi-spi": "^1.0.1",
     "system-sleep": "^1.3.5"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^4.0.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
