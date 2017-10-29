@@ -28,9 +28,13 @@ class Motor {
      * Set the motor target position in degrees
      *
      * @param {number} position The target position
+     * @param {number} power If given, sets the power limit of the motor
      * @return {Promise} Resolves, when the target position is reached
      */
-    async setPosition(position) {
+    async setPosition(position, power = 0) {
+        if (power > 0) {
+            await this.BP.set_motor_limits(this.port, power);
+        }
         await this.BP.set_motor_position(this.port, position);
 
         let lastEncoder = null;
