@@ -1,4 +1,4 @@
-const sleep = require('system-sleep');
+const sleep = require('es7-sleep');
 
 class Motor {
     constructor(BP, port) {
@@ -18,7 +18,7 @@ class Motor {
 
         if (typeof breakFunction === 'function') {
             while (!await breakFunction()) {
-                sleep(20);
+                await sleep(20);
             }
 
             await this.BP.set_motor_power(this.port, 0);
@@ -39,7 +39,7 @@ class Motor {
 
         let lastEncoder = null;
         while (true) {
-            sleep(20);
+            await sleep(20);
 
             let encoder = await this.BP.get_motor_encoder(this.port);
 

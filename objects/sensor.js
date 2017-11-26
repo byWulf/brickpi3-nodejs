@@ -1,4 +1,4 @@
-const sleep = require('system-sleep');
+const sleep = require('es7-sleep');
 
 class Sensor {
     constructor(BP, port) {
@@ -79,7 +79,7 @@ class Sensor {
      */
     async waitFor(value) {
         while (true) {
-            sleep(10);
+            await sleep(10);
 
             let currentValue = await this.BP.get_sensor(this.port);
 

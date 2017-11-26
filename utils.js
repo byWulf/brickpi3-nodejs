@@ -1,4 +1,4 @@
-const sleep = require('system-sleep');
+const sleep = require('es7-sleep');
 const Motor = require('./objects/motor');
 const Sensor = require('./objects/sensor');
 
@@ -28,94 +28,46 @@ const RESET_MOTOR_LIMIT = {
  * @param {number} motorPower Power of the motor (lower for smoother finding)
  * @return {Promise} When the new offset is set, the promise resolves.
  */
-const resetMotorEncoder = (brickPiInstance, motorPort, limitType = RESET_MOTOR_LIMIT.CURRENT_POSITION, newOffset = 0, maxPower = 25, timeLimit = 10000, motorPower = 100) => {
-    return new Promise((resolve, reject) => {
+const resetMotorEncoder = async (brickPiInstance, motorPort, limitType = RESET_MOTOR_LIMIT.CURRENT_POSITION, newOffset = 0, maxPower = 25, timeLimit = 10000, motorPower = 100) => {
+    let startTime = Date.now();
+    const checkPower = async () => {
+        while (Date.now() - startTime <= timeLimit) {
+            await sleep(20);
 
-        let startTime = Date.now();
-        const checkPower = (callback) => {
-            sleep(20);
-            if (Date.now() - startTime > timeLimit) {
-                brickPiInstance.set_motor_power(motorPort, 0).then(() => {
-                    callback(new Error('resetMotorEncoder: timeLimit exceeded'));
-                }).catch((err) => {
-                    callback(err);
-                });
-                return;
+            let status = await brickPiInstance.get_motor_status(motorPort);
+            if (Math.abs(status[3]) <= maxPower) {
+                await brickPiInstance.set_motor_power(motorPort, 0);
+                return status[2];
             }
-
-            brickPiInstance.get_motor_status(motorPort).then((status) => {
-                if (Math.abs(status[3]) <= maxPower) {
-                    brickPiInstance.set_motor_power(motorPort, 0).then(() => {
-                        callback(null, status[2]);
-                    }).catch((err) => {
-                        callback(err);
-                    });
-                } else {
-                    checkPower(callback);
-                }
-            });
-        };
-
-        if (limitType === RESET_MOTOR_LIMIT.CURRENT_POSITION) {
-            brickPiInstance.get_motor_encoder(motorPort).then((offset) => {
-                return brickPiInstance.offset_motor_encoder(motorPort, offset - newOffset);
-            }).then(() => {
-                resolve();
-            }).catch((err) => {
-                reject(err);
-            });
-        } else if (limitType === RESET_MOTOR_LIMIT.FORWARD_LIMIT || limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) {
-            let power = motorPower;
-            if (limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) power = -motorPower;
-
-            brickPiInstance.set_motor_power(motorPort, power).then(() => {
-                checkPower((err, offset) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-
-                    brickPiInstance.offset_motor_encoder(motorPort, offset - newOffset).then(() => {
-                        resolve();
-                    }).catch((err) => {
-                        reject(err);
-                    });
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        } else if (limitType === RESET_MOTOR_LIMIT.MIDPOINT_LIMIT) {
-            brickPiInstance.set_motor_power(motorPort, motorPower).then(() => {
-                checkPower((err, offsetForward) => {
-                    if (err) {
-                        reject(err);
-                        return;
-                    }
-
-                    brickPiInstance.set_motor_power(motorPort, -motorPower).then(() => {
-                        checkPower((err, offsetBackward) => {
-                            if (err) {
-                                reject(err);
-                                return;
-                            }
-
-                            brickPiInstance.offset_motor_encoder(motorPort, offsetBackward + (offsetForward - offsetBackward) / 2 - newOffset).then(() => {
-                                resolve();
-                            }).catch((err) => {
-                                reject(err);
-                            });
-                        });
-                    }).catch((err) => {
-                        reject(err);
-                    });
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        } else {
-            throw new Error('resetMotorEncoder: Invalid limitType.');
         }
-    });
+
+        await brickPiInstance.set_motor_power(motorPort, 0);
+        throw new Error('resetMotorEncoder: timeLimit exceeded');
+    };
+
+    if (limitType === RESET_MOTOR_LIMIT.CURRENT_POSITION) {
+        let offset = await brickPiInstance.get_motor_encoder(motorPort);
+        await brickPiInstance.offset_motor_encoder(motorPort, offset - newOffset);
+
+    } else if (limitType === RESET_MOTOR_LIMIT.FORWARD_LIMIT || limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) {
+        let power = motorPower;
+        if (limitType === RESET_MOTOR_LIMIT.BACKWARD_LIMIT) power = -motorPower;
+
+        await brickPiInstance.set_motor_power(motorPort, power);
+        let offset = await checkPower();
+        await brickPiInstance.offset_motor_encoder(motorPort, offset - newOffset);
+
+    } else if (limitType === RESET_MOTOR_LIMIT.MIDPOINT_LIMIT) {
+        await brickPiInstance.set_motor_power(motorPort, motorPower);
+        let offsetForward = await checkPower();
+
+        await brickPiInstance.set_motor_power(motorPort, -motorPower);
+        let offsetBackward = await checkPower();
+
+        await brickPiInstance.offset_motor_encoder(motorPort, offsetBackward + (offsetForward - offsetBackward) / 2 - newOffset);
+    } else {
+        throw new Error('resetMotorEncoder: Invalid limitType.');
+    }
 };
 
 let resetBrickPis = [];
@@ -152,29 +104,20 @@ const resetAllWhenFinished = (brickPiInstance) => {
  * @param targetPosition
  * @return {Promise}
  */
-const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
-    return new Promise((resolve, reject) => {
-        let lastEncoder = null;
-        const checkPosition = (callback) => {
-            sleep(20);
+const setMotorPosition = async (brickPiInstance, motorPort, targetPosition) => {
+    await brickPiInstance.set_motor_position(motorPort, targetPosition);
 
-            brickPiInstance.get_motor_encoder(motorPort).then((encoder) => {
-                if (lastEncoder !== null && lastEncoder === encoder) {
-                    callback();
-                    return;
-                }
-                lastEncoder = encoder;
+    let lastEncoder = null;
+    while (true) {
+        await sleep(20);
 
-                checkPosition(callback);
-            });
-        };
+        let encoder = await brickPiInstance.get_motor_encoder(motorPort);
 
-        brickPiInstance.set_motor_position(motorPort, targetPosition).then(() => {
-            checkPosition(() => {
-                resolve();
-            });
-        });
-    });
+        if (lastEncoder !== null && lastEncoder === encoder) {
+            return;
+        }
+        lastEncoder = encoder;
+    }
 };
 
 /**
@@ -188,27 +131,19 @@ const setMotorPosition = (brickPiInstance, motorPort, targetPosition) => {
  * @param {number} timeLimit
  * @return {Promise}
  */
-const waitForSensor = (brickPiInstance, sensorPort, targetValue, timeLimit = 10000) => {
-    return new Promise((resolve, reject) => {
-        let startTime = Date.now();
-        const checkValue = () => {
-            sleep(10);
-            if (Date.now() - startTime > timeLimit) {
-                reject(new Error('waitForSensor: timeLimit exceeded'));
-                return;
-            }
+const waitForSensor = async (brickPiInstance, sensorPort, targetValue, timeLimit = 10000) => {
+    let startTime = Date.now();
 
-            brickPiInstance.get_sensor(sensorPort).then((value) => {
-                if (value === targetValue) {
-                    resolve();
-                } else {
-                    checkValue();
-                }
-            });
-        };
+    while (Date.now() - startTime <= timeLimit) {
+        await sleep(10);
 
-        checkValue();
-    });
+        let value = await brickPiInstance.get_sensor(sensorPort);
+        if (value === targetValue) {
+            return;
+        }
+    }
+
+    throw new Error('waitForSensor: timeLimit exceeded');
 };
 
 const getMotor = (brickPiInstance, motorPort) => {
