@@ -25,7 +25,10 @@ class Sensor {
      * @return {Promise}
      */
     async setType(type, params = 0) {
-        return this.BP.set_sensor_type(this.port, type, params);
+        let result = await this.BP.set_sensor_type(this.port, type, params);
+        await sleep(10); //Don't know why it is needed, but otherwise calling getValue right after setType leads to an error
+
+        return result;
     }
 
     /**
