@@ -65,6 +65,9 @@ const brickpi3 = require('brickpi3');
         let motor = brickpi3.utils.getMotor(BP, BP.PORT_A);
         let sensor = brickpi3.utils.getSensor(BP, BP.PORT_2);
         
+        //First set the type of the sensor
+        await sensor.setType(BP.SENSOR_TYPE.EV3_TOUCH);
+        
         //Reset the motors encoder to 0
         await motor.resetEncoder();
         
