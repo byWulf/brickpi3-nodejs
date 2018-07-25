@@ -585,6 +585,23 @@ function BrickPi3(address = 1) {
         });
     };
 
+    this.wait_until_configuration_is_finished = (args, timeout=3000) => {
+      return new Promise(async (resolve, reject) => {
+
+        setTimeout( () => {
+	  return reject(null);
+	}, timeout);
+
+        while(true) {
+          const reply = await this.spi_transfer_array(args);
+	  if(reply[5] === this.SENSOR_STATE.VALID_DATA){
+	    return resolve(this.spi_transfer_array(args));
+	  }
+        }
+
+      });
+    }
+
     // noinspection JSUnusedGlobalSymbols
     /**
      * Set the sensor type.
@@ -768,7 +785,7 @@ function BrickPi3(address = 1) {
             }
 
             if (this.SensorType[port_index] === this.SENSOR_TYPE.CUSTOM) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve([(((reply[8] & 0x0F) << 8) | reply[9]), (((reply[8] >> 4) & 0x0F) | (reply[7] << 4)), (reply[6] & 0x01), ((reply[6] >> 1) & 0x01)]);
@@ -786,7 +803,7 @@ function BrickPi3(address = 1) {
                 for (let i = 0; i < this.I2CInBytes[port_index]; i++) {
                     outArray.push(0);
                 }
-                this.spi_transfer_array(outArray).then((reply) => {
+                this.wait_until_configuration_is_finished(outArray).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA && reply.length - 6 === this.I2CInBytes[port_index]) {
                             let values = [];
@@ -814,7 +831,7 @@ function BrickPi3(address = 1) {
                 this.SENSOR_TYPE.EV3_ULTRASONIC_LISTEN,
                 this.SENSOR_TYPE.EV3_INFRARED_PROXIMITY
             ].indexOf(this.SensorType[port_index]) > -1) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if ((reply[4] === this.SensorType[port_index] || (this.SensorType[port_index] === this.SENSOR_TYPE.TOUCH && (reply[4] === this.SENSOR_TYPE.NXT_TOUCH || reply[4] === this.SENSOR_TYPE.EV3_TOUCH))) && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve(reply[6]);
@@ -828,7 +845,7 @@ function BrickPi3(address = 1) {
                     reject(err);
                 });
             } else if (this.SensorType[port_index] === this.SENSOR_TYPE.NXT_COLOR_FULL) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve([reply[6], ((reply[7] << 2) | ((reply[11] >> 6) & 0x03)), ((reply[8] << 2) | ((reply[11] >> 4) & 0x03)), ((reply[9] << 2) | ((reply[11] >> 2) & 0x03)), ((reply[10] << 2) | (reply[11] & 0x03))]);
@@ -853,7 +870,7 @@ function BrickPi3(address = 1) {
                 this.SENSOR_TYPE.EV3_ULTRASONIC_CM,
                 this.SENSOR_TYPE.EV3_ULTRASONIC_INCHES
             ].indexOf(this.SensorType[port_index]) > -1) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             let value = parseInt((reply[6] << 8) | reply[7]);
@@ -876,7 +893,7 @@ function BrickPi3(address = 1) {
                 this.SENSOR_TYPE.EV3_COLOR_RAW_REFLECTED,
                 this.SENSOR_TYPE.EV3_GYRO_ABS_DPS
             ].indexOf(this.SensorType[port_index]) > -1) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve([parseInt((reply[6] << 8) | reply[7]), parseInt((reply[8] << 8) | reply[9])]);
@@ -890,7 +907,7 @@ function BrickPi3(address = 1) {
                     reject(err);
                 });
             } else if (this.SensorType[port_index] === this.SENSOR_TYPE.EV3_COLOR_COLOR_COMPONENTS) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve([parseInt((reply[6] << 8) | reply[7]), parseInt((reply[8] << 8) | reply[9]), parseInt((reply[10] << 8) | reply[11]), parseInt((reply[12] << 8) | reply[13])]);
@@ -904,7 +921,7 @@ function BrickPi3(address = 1) {
                     reject(err);
                 });
             } else if (this.SensorType[port_index] === this.SENSOR_TYPE.EV3_INFRARED_SEEK) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             resolve([[parseInt(reply[6]), parseInt(reply[7])], [parseInt(reply[8]), parseInt(reply[9])], [parseInt(reply[10]), parseInt(reply[11])], [parseInt(reply[12]), parseInt(reply[13])]]);
@@ -918,7 +935,7 @@ function BrickPi3(address = 1) {
                     reject(err);
                 });
             } else if (this.SensorType[port_index] === this.SENSOR_TYPE.EV3_INFRARED_REMOTE) {
-                this.spi_transfer_array([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
+                this.wait_until_configuration_is_finished([this.SPI_Address, message_type, 0, 0, 0, 0, 0, 0, 0, 0]).then((reply) => {
                     if (reply[3] === 0xA5) {
                         if (reply[4] === this.SensorType[port_index] && reply[5] === this.SENSOR_STATE.VALID_DATA) {
                             let results = [0, 0, 0, 0];
