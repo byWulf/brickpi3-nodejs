@@ -63,11 +63,15 @@ const brickpi3 = require('brickpi3');
         
         //Get the instance of one motor and sensor
         let motor = brickpi3.utils.getMotor(BP, BP.PORT_A);
+        //getSensor has an optional third parameter which allows to overwrite the default configuration time limit
         let sensor = brickpi3.utils.getSensor(BP, BP.PORT_2);
         
         //First set the type of the sensor
         await sensor.setType(BP.SENSOR_TYPE.EV3_TOUCH);
         
+        //You can also change the default configuration time limit (3000ms) for the sensor configuration after initialization
+        sensor.setConfigurationTimeLimit(4000);
+
         //Reset the motors encoder to 0
         await motor.resetEncoder();
         

@@ -1,9 +1,10 @@
 const sleep = require('es7-sleep');
 
 class Sensor {
-    constructor(BP, port) {
+    constructor(BP, port, timeLimit) {
         this.BP = BP;
         this.port = port;
+        this.timeLimit = timeLimit || 3000;
     }
 
     /**
@@ -25,10 +26,16 @@ class Sensor {
      * @return {Promise}
      */
     async setType(type, params = 0) {
-        let result = await this.BP.set_sensor_type(this.port, type, params);
-        await sleep(10); //Don't know why it is needed, but otherwise calling getValue right after setType leads to an error
+        return this.BP.set_sensor_type(this.port, type, params);
+    }
 
-        return result;
+    /**
+     * Set the default waiting time for sensor configuration configuration.
+     *
+     * @param {number} waiting time for sensor configuration
+     */
+    setConfigurationTimeLimit(timeLimit) {
+        this.timeLimit = timeLimit;
     }
 
     /**
@@ -70,7 +77,7 @@ class Sensor {
      * @return {Promise.<number|Array.<number>>}
      */
     async getValue() {
-        return this.BP.get_sensor(this.port);
+        return this.BP.get_sensor(this.port, this.timeLimit);
     }
 
     /**
@@ -84,7 +91,7 @@ class Sensor {
         while (true) {
             await sleep(10);
 
-            let currentValue = await this.BP.get_sensor(this.port);
+            let currentValue = await this.BP.get_sensor(this.port, this.timeLimit);
 
             if (currentValue === value) {
                 return currentValue;

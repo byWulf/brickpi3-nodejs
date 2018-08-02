@@ -137,7 +137,7 @@ const waitForSensor = async (brickPiInstance, sensorPort, targetValue, timeLimit
     while (Date.now() - startTime <= timeLimit) {
         await sleep(10);
 
-        let value = await brickPiInstance.get_sensor(sensorPort);
+        let value = await brickPiInstance.get_sensor(sensorPort, timeLimit);
         if (value === targetValue) {
             return;
         }
@@ -150,8 +150,8 @@ const getMotor = (brickPiInstance, motorPort) => {
     return new Motor(brickPiInstance, motorPort);
 };
 
-const getSensor = (brickPiInstance, sensorPort) => {
-    return new Sensor(brickPiInstance, sensorPort);
+const getSensor = (brickPiInstance, sensorPort, timeLimit=null) => {
+    return new Sensor(brickPiInstance, sensorPort, timeLimit);
 };
 
 const Gear = function(teeth) {
