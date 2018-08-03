@@ -603,7 +603,7 @@ function BrickPi3(address = 1) {
                 const reply = await this.spi_transfer_array(args);
                 if(reply[5] === this.SENSOR_STATE.VALID_DATA){
                     clearTimeout(timeout);
-                    return resolve(this.spi_transfer_array(args));
+                    return resolve(reply);
                 }
             }
 
