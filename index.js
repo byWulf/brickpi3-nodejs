@@ -499,7 +499,8 @@ function BrickPi3(address = 1) {
                 if (reply[3] === 0xA5) {
                     let id = '';
                     for (let i = 4; i <= 19; i++) {
-                        id += reply[i].toString(16);
+                        const char = reply[i].toString(16);
+                        id += (char.length < 2 ? '0' : '') + char;
                     }
                     resolve(id);
                 }
